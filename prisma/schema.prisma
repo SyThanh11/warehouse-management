@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String
+  role     Role     @default(STAFF)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  imports Import[]
+  exports Export[]
+
+  createdCategories Category[] @relation("CategoryCreatedBy")
+  updatedCategories Category[] @relation("CategoryUpdatedBy")
+  deletedCategories Category[] @relation("CategoryDeletedBy")
+
+  createdRecords Product[]      @relation("ProductCreatedBy")
+  updatedRecords Product[]      @relation("ProductUpdatedBy")
+  deletedRecords Product[]      @relation("ProductDeletedBy")
+
+  // Supplier relations
+  createdSuppliers Supplier[] @relation("SupplierCreatedBy")
+  updatedSuppliers Supplier[] @relation("SupplierUpdatedBy")
+  deletedSuppliers Supplier[] @relation("SupplierDeletedBy")
+
+  // Customer relations
+  createdCustomers Customer[] @relation("CustomerCreatedBy")
+  updatedCustomers Customer[] @relation("CustomerUpdatedBy")
+  deletedCustomers Customer[] @relation("CustomerDeletedBy")
+
+  // Import relations
+  createdImports Import[] @relation("ImportCreatedBy")
+  updatedImports Import[] @relation("ImportUpdatedBy")
+  deletedImports Import[] @relation("ImportDeletedBy")
+
+  // Export relations
+  createdExports Export[] @relation("ExportCreatedBy")
+  updatedExports Export[] @relation("ExportUpdatedBy")
+  deletedExports Export[] @relation("ExportDeletedBy")
+
+  @@index([role])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+
+  createdBy   User? @relation("CategoryCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User? @relation("CategoryUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User? @relation("CategoryDeletedBy", fields: [deletedById], references: [id])
+}
+
+model Product {
+  id          String     @id @default(uuid())
+  name        String
+  sku         String     @unique
+  description String?
+  unit        String
+  quantity    Int        @default(0)
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+
+  createdBy   User? @relation("ProductCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User? @relation("ProductUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User? @relation("ProductDeletedBy", fields: [deletedById], references: [id])
+
+  importItems ImportItem[]
+  exportItems ExportItem[]
+
+  @@index([categoryId])
+  @@index([name])
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+
+  createdBy   User? @relation("SupplierCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User? @relation("SupplierUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User? @relation("SupplierDeletedBy", fields: [deletedById], references: [id])
+
+  imports   Import[]
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+
+  createdBy   User? @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User? @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User? @relation("CustomerDeletedBy", fields: [deletedById], references: [id])
+
+  exports   Export[]
+}
+
+model Import {
+  id         String     @id @default(uuid())
+  supplierId String
+  supplier   Supplier   @relation(fields: [supplierId], references: [id])
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  importDate DateTime   @default(now())
+  items      ImportItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+
+  createdBy   User? @relation("ImportCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User? @relation("ImportUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User? @relation("ImportDeletedBy", fields: [deletedById], references: [id])
+
+  @@index([supplierId])
+  @@index([importDate])
+}
+
+model ImportItem {
+  id        String   @id @default(uuid())
+  importId  String
+  productId String
+  quantity  Int
+
+  import   Import   @relation(fields: [importId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+}
+
+model Export {
+  id         String     @id @default(uuid())
+  customerId String
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  userId     String
+  user       User       @relation(fields: [userId], references: [id])
+  exportDate DateTime   @default(now())
+  items      ExportItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdById String?
+  updatedById String?
+  deletedById String?
+
+  createdBy   User? @relation("ExportCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User? @relation("ExportUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy   User? @relation("ExportDeletedBy", fields: [deletedById], references: [id])
+
+  @@index([customerId])
+  @@index([exportDate])
+}
+
+model ExportItem {
+  id        String   @id @default(uuid())
+  exportId  String
+  productId String
+  quantity  Int
+
+  export   Export   @relation(fields: [exportId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+}
